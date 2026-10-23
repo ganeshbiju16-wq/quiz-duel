@@ -1,0 +1,20 @@
+{
+  "name": "quiz-duel",
+  "version": "1.0.0",
+  "description": "Quiz Duel - live multiplayer quiz game (flags, capitals, general knowledge)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node setup.js && node server.js",
+    "seed": "node seed.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "google-auth-library": "^9.15.1",
+    "pg": "^8.13.1",
+    "socket.io": "^4.8.1"
+  }
+}

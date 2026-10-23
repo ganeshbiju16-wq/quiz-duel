@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Duel – Live Multiplayer Quiz Game | Flags, Capitals & GK</title>
+<meta name="description" content="Play free live quiz battles against players around the world. Guess flags, name capitals and test your general knowledge in fast 10-question duels.">
+<meta name="keywords" content="quiz game, online quiz, multiplayer quiz, flag quiz, capital quiz, general knowledge quiz">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Quiz Duel – Live Multiplayer Quiz Game">
+<meta property="og:description" content="Challenge players worldwide in fast quiz duels: flags, capitals and general knowledge.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+  :root {
+    --bg: #0f1226;
+    --card: #1a1f3d;
+    --card2: #232a52;
+    --text: #f2f3fa;
+    --muted: #9aa0c3;
+    --accent: #ffb703;
+    --good: #2ec27e;
+    --bad: #e5484d;
+    --blue: #4c8dff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center; padding: 24px 16px;
+  }
+  .app { width: 100%; max-width: 560px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 22px; margin: 0 0 16px; }
+  .logo { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .card { background: var(--card); border-radius: 16px; padding: 24px; margin-top: 16px; }
+  .hidden { display: none !important; }
+  input {
+    width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--card2);
+    background: var(--bg); color: var(--text); font-size: 16px; margin: 8px 0 12px;
+  }
+  input:focus { outline: none; border-color: var(--blue); }
+  button {
+    width: 100%; padding: 14px; border: 0; border-radius: 10px; font-size: 16px;
+    font-weight: 600; cursor: pointer; background: var(--blue); color: white; margin-top: 8px;
+  }
+  button:hover { filter: brightness(1.1); }
+  button.secondary { background: var(--card2); }
+  button:disabled { opacity: .5; cursor: default; }
+  .error { color: var(--bad); min-height: 20px; font-size: 14px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; }
+  .pill { background: var(--card2); padding: 6px 12px; border-radius: 999px; font-size: 14px; }
+  .types { display: grid; gap: 12px; margin-top: 8px; }
+  .type-btn { text-align: left; padding: 18px; font-size: 18px; background: var(--card2); }
+  .type-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .center { text-align: center; }
+  .big { font-size: 56px; font-weight: 800; margin: 12px 0; }
+  .spinner {
+    width: 48px; height: 48px; border: 5px solid var(--card2); border-top-color: var(--accent);
+    border-radius: 50%; margin: 16px auto; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scores { display: flex; justify-content: space-between; gap: 12px; }
+  .score { flex: 1; background: var(--card2); border-radius: 12px; padding: 10px 14px; }
+  .score .name { font-size: 13px; color: var(--muted); }
+  .score .pts { font-size: 22px; font-weight: 700; }
+  .score.opp { text-align: right; }
+  .tick { color: var(--good); font-size: 13px; }
+  .timer { height: 8px; background: var(--card2); border-radius: 4px; overflow: hidden; margin: 16px 0; }
+  .timer div { height: 100%; background: var(--accent); width: 100%; }
+  .qnum { color: var(--muted); font-size: 14px; }
+  .prompt { font-size: 20px; margin: 8px 0 16px; line-height: 1.4; }
+  .flag { display: block; max-width: 100%; max-height: 180px; margin: 0 auto 16px; border-radius: 6px; box-shadow: 0 2px 12px #0006; }
+  .options { display: grid; gap: 10px; }
+  .opt { background: var(--card2); text-align: left; margin: 0; position: relative; }
+  .opt:disabled { opacity: .7; }
+  .opt.chosen, .opt.correct, .opt.wrong { opacity: 1; }
+  .opt.chosen { outline: 3px solid var(--blue); }
+  .opt.correct { background: var(--good); }
+  .opt.wrong { background: var(--bad); }
+  .opt .tag { position: absolute; right: 12px; font-size: 12px; font-weight: 400; opacity: .9; }
+  .feedback { min-height: 24px; margin-top: 12px; text-align: center; font-weight: 600; }
+  .result-title { font-size: 44px; font-weight: 800; margin: 8px 0; }
+  .win { color: var(--good); } .lose { color: var(--bad); } .draw { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { padding: 8px 4px; text-align: left; border-bottom: 1px solid var(--card2); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num, th.num { text-align: right; }
+  .notice { background: var(--card2); border-radius: 10px; padding: 10px; margin-top: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 1. Login -->
+  <section id="screen-login">
+    <h1><span class="logo">⚡</span> Quiz Duel</h1>
+    <p class="muted">Play live quizzes against players around the world.</p>
+    <div class="card">
+      <h2>Sign in</h2>
+      <p class="muted">Test login (Google sign-in comes later). Type any name. Use a different name in each browser tab to play against yourself.</p>
+      <input id="login-name" placeholder="e.g. ganesh" maxlength="30">
+      <button id="login-btn">Sign in</button>
+      <div class="error" id="login-error"></div>
+    </div>
+  </section>
+
+  <!-- 2. Choose username -->
+  <section id="screen-username" class="hidden">
+    <h1>Pick a username</h1>
+    <div class="card">
+      <p class="muted">3 to 16 letters, numbers or _ . Other players will see this.</p>
+      <input id="username-input" placeholder="QuizMaster_99" maxlength="16">
+      <button id="username-btn">Continue</button>
+      <div class="error" id="username-error"></div>
+    </div>
+  </section>
+
+  <!-- 3. Home: pick quiz type -->
+  <section id="screen-home" class="hidden">
+    <div class="topbar">
+      <h1><span class="logo">⚡</span> Quiz Duel</h1>
+      <span class="pill" id="home-points">0 pts</span>
+    </div>
+    <p class="muted">Hi <b id="home-name"></b>! Choose a quiz.</p>
+    <div class="types" id="types"></div>
+    <div class="error" id="home-error"></div>
+    <div class="card">
+      <h2>Leaderboard</h2>
+      <table>
+        <thead><tr><th>#</th><th>Player</th><th class="num">Points</th><th class="num">W/L/D</th></tr></thead>
+        <tbody id="leaderboard"></tbody>
+      </table>
+    </div>
+    <button class="secondary" id="logout-btn">Sign out</button>
+  </section>
+
+  <!-- 4. Searching -->
+  <section id="screen-search" class="hidden">
+    <div class="card center">
+      <h2>Finding an opponent…</h2>
+      <div class="spinner"></div>
+      <div class="big" id="search-count">10</div>
+      <p class="muted">If nobody joins in time, you'll play a practice opponent.</p>
+      <button class="secondary" id="cancel-btn">Cancel</button>
+    </div>
+  </section>
+
+  <!-- 5. Match found -->
+  <section id="screen-found" class="hidden">
+    <div class="card center">
+      <p class="muted">Match found!</p>
+      <h2 id="found-names"></h2>
+      <p class="muted" id="found-info"></p>
+      <div class="big" id="found-count">3</div>
+    </div>
+  </section>
+
+  <!-- 6. Question -->
+  <section id="screen-question" class="hidden">
+    <div class="scores">
+      <div class="score"><div class="name" id="me-name">You</div><div class="pts" id="me-score">0</div></div>
+      <div class="score opp">
+        <div class="name" id="opp-name">Opponent</div>
+        <div class="pts" id="opp-score">0</div>
+        <div class="tick hidden" id="opp-tick">✔ answered</div>
+      </div>
+    </div>
+    <div class="timer"><div id="timer-bar"></div></div>
+    <div class="card">
+      <div class="qnum" id="q-num"></div>
+      <img class="flag hidden" id="q-img" alt="Flag">
+      <div class="prompt" id="q-prompt"></div>
+      <div class="options" id="q-options"></div>
+      <div class="feedback" id="q-feedback"></div>
+    </div>
+  </section>
+
+  <!-- 7. Result -->
+  <section id="screen-result" class="hidden">
+    <div class="card center">
+      <div class="result-title" id="res-title"></div>
+      <p id="res-score" style="font-size:20px"></p>
+      <p class="muted" id="res-points"></p>
+      <button id="rematch-btn">Rematch</button>
+      <button class="secondary" id="another-btn">Another match</button>
+      <button class="secondary" id="home-btn">Home</button>
+      <div class="notice hidden" id="res-notice"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Socket.IO client is served automatically by the server -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const TYPE_INFO = {
+    flag: { icon: '🏳️', text: 'Guess the country from its flag' },
+    country: { icon: '🌍', text: 'Capitals of the world' },
+    general: { icon: '🧠', text: 'Mixed general knowledge' },
+  };
+
+  let socket = null;
+  let me = { username: null, totalPoints: 0 };
+  let opponentName = 'Opponent';
+  let lastQuizType = null;
+  let currentQ = null;
+  let myChoice = null;
+  let timerRaf = null;
+  let countdown = null;
+
+  // ---------- helpers ----------
+  function show(name) {
+    document.querySelectorAll('section').forEach((s) => s.classList.add('hidden'));
+    $('screen-' + name).classList.remove('hidden');
+  }
+  function store(key, value) {
+    try { value == null ? sessionStorage.removeItem(key) : sessionStorage.setItem(key, value); } catch (e) {}
+  }
+  function load(key) {
+    try { return sessionStorage.getItem(key); } catch (e) { return null; }
+  }
+  function startCountdown(el, seconds) {
+    clearInterval(countdown);
+    let left = seconds;
+    el.textContent = left;
+    countdown = setInterval(() => {
+      left -= 1;
+      el.textContent = Math.max(left, 0);
+      if (left <= 0) clearInterval(countdown);
+    }, 1000);
+  }
+  const ERRORS = {
+    invalid_username: 'Use 3 to 16 letters, numbers or _ only.',
+    username_taken: 'That username is taken. Try another.',
+    already_busy: 'You are already in a match or searching.',
+    not_enough_questions: 'Not enough questions for this quiz yet.',
+    rematch_expired: 'Rematch time ran out.',
+    opponent_unavailable: 'Your opponent has left.',
+    auth_failed: 'Sign-in failed. Is the server running?',
+    missing_token: 'Please sign in again.',
+  };
+  const errText = (code) => ERRORS[code] || ('Something went wrong (' + code + ')');
+
+  // ---------- login ----------
+  function connect(token) {
+    if (socket) socket.disconnect();
+    socket = io({ auth: { token } });
+
+    socket.on('connect_error', (err) => {
+      $('login-error').textContent = errText(err.message);
+      store('token', null);
+      show('login');
+    });
+
+    socket.on('ready', (data) => {
+      $('login-error').textContent = '';
+      me.username = data.username;
+      me.totalPoints = data.totalPoints || 0;
+      if (data.needsUsername) show('username');
+      else goHome();
+    });
+
+    socket.on('match_found', onMatchFound);
+    socket.on('question', onQuestion);
+    socket.on('opponent_answered', () => $('opp-tick').classList.remove('hidden'));
+    socket.on('question_result', onQuestionResult);
+    socket.on('match_end', onMatchEnd);
+    socket.on('match_error', (d) => { goHome(); $('home-error').textContent = errText(d.error); });
+    socket.on('rematch_requested', () => {
+      $('res-notice').textContent = opponentName + ' wants a rematch! Press Rematch to accept.';
+      $('res-notice').classList.remove('hidden');
+    });
+    socket.on('disconnect', (reason) => {
+      if (reason === 'io server disconnect') show('login');
+    });
+  }
+
+  $('login-btn').onclick = () => {
+    const name = $('login-name').value.trim();
+    if (!name) { $('login-error').textContent = 'Type a name first.'; return; }
+    const token = 'dev:' + name.toLowerCase();
+    store('token', token);
+    connect(token);
+  };
+  $('login-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('login-btn').click(); });
+
+  $('logout-btn').onclick = () => {
+    store('token', null);
+    if (socket) socket.disconnect();
+    socket = null;
+    show('login');
+  };
+
+  // ---------- username ----------
+  $('username-btn').onclick = () => {
+    const username = $('username-input').value.trim();
+    socket.emit('set_username', { username }, (res) => {
+      if (!res.ok) { $('username-error').textContent = errText(res.error); return; }
+      me.username = res.username;
+      goHome();
+    });
+  };
+  $('username-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('username-btn').click(); });
+
+  // ---------- home ----------
+  async function goHome() {
+    show('home');
+    $('home-error').textContent = '';
+    $('home-name').textContent = me.username;
+    $('home-points').textContent = me.totalPoints + ' pts';
+
+    try {
+      const types = await (await fetch('/quiz-types')).json();
+      const box = $('types');
+      box.innerHTML = '';
+      types.forEach((t) => {
+        const info = TYPE_INFO[t.slug] || { icon: '❓', text: '' };
+        const b = document.createElement('button');
+        b.className = 'type-btn';
+        b.textContent = info.icon + '  ' + t.name;
+        const small = document.createElement('small');
+        small.textContent = info.text;
+        b.appendChild(small);
+        b.onclick = () => findMatch(t.slug);
+        box.appendChild(b);
+      });
+    } catch (e) {
+      $('home-error').textContent = 'Could not load quizzes. Is the server running?';
+    }
+
+    try {
+      const rows = await (await fetch('/leaderboard')).json();
+      const body = $('leaderboard');
+      body.innerHTML = '';
+      rows.slice(0, 10).forEach((r, i) => {
+        const tr = document.createElement('tr');
+        [i + 1, r.username, r.total_points, r.wins + '/' + r.losses + '/' + r.draws].forEach((v, n) => {
+          const td = document.createElement('td');
+          td.textContent = v;
+          if (n >= 2) td.className = 'num';
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+      if (!rows.length) body.innerHTML = '<tr><td colspan="4" class="muted">No games played yet.</td></tr>';
+    } catch (e) {}
+  }
+
+  // ---------- matchmaking ----------
+  function findMatch(slug) {
+    lastQuizType = slug;
+    $('home-error').textContent = '';
+    socket.emit('find_match', { quizType: slug }, (res) => {
+      if (!res.ok) { goHome(); $('home-error').textContent = errText(res.error); return; }
+      show('search');
+      startCountdown($('search-count'), Math.round(res.waitMs / 1000));
+    });
+  }
+  $('cancel-btn').onclick = () => {
+    clearInterval(countdown);
+    socket.emit('cancel_search', {}, () => goHome());
+  };
+
+  function onMatchFound(d) {
+    clearInterval(countdown);
+    opponentName = d.opponent.username || 'Opponent';
+    $('found-names').textContent = me.username + '  vs  ' + opponentName;
+    $('found-info').textContent = d.questionCount + ' questions' + (d.opponent.isBot ? ' · practice opponent' : '');
+    $('me-name').textContent = me.username + ' (you)';
+    $('opp-name').textContent = opponentName;
+    $('me-score').textContent = '0';
+    $('opp-score').textContent = '0';
+    $('res-notice').classList.add('hidden');
+    show('found');
+    startCountdown($('found-count'), 3);
+  }
+
+  // ---------- questions ----------
+  function onQuestion(q) {
+    currentQ = q;
+    myChoice = null;
+    show('question');
+    $('opp-tick').classList.add('hidden');
+    $('q-feedback').textContent = '';
+    $('q-num').textContent = 'Question ' + (q.index + 1) + ' of ' + q.total;
+    $('q-prompt').textContent = q.prompt;
+
+    const img = $('q-img');
+    if (q.imageUrl) { img.src = q.imageUrl; img.classList.remove('hidden'); }
+    else { img.removeAttribute('src'); img.classList.add('hidden'); }
+
+    const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+    const box = $('q-options');
+    box.innerHTML = '';
+    options.forEach((text, i) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = text;
+      b.onclick = () => answer(i);
+      box.appendChild(b);
+    });
+
+    // timer bar
+    cancelAnimationFrame(timerRaf);
+    const start = performance.now();
+    const bar = $('timer-bar');
+    const tick = (now) => {
+      const left = Math.max(0, 1 - (now - start) / q.timeLimitMs);
+      bar.style.width = (left * 100) + '%';
+      bar.style.background = left < 0.3 ? 'var(--bad)' : 'var(--accent)';
+      if (left > 0) timerRaf = requestAnimationFrame(tick);
+    };
+    timerRaf = requestAnimationFrame(tick);
+  }
+
+  function answer(i) {
+    if (myChoice !== null || !currentQ) return;
+    myChoice = i;
+    const buttons = $('q-options').children;
+    [...buttons].forEach((b) => (b.disabled = true));
+    buttons[i].classList.add('chosen');
+    $('q-feedback').textContent = 'Waiting for ' + opponentName + '…';
+    socket.emit('answer', { questionIndex: currentQ.index, choice: i });
+  }
+
+  function onQuestionResult(r) {
+    cancelAnimationFrame(timerRaf);
+    const buttons = [...$('q-options').children];
+    buttons.forEach((b) => (b.disabled = true));
+    if (buttons[r.correctIndex]) buttons[r.correctIndex].classList.add('correct');
+    if (r.you.choice !== null && r.you.choice !== r.correctIndex && buttons[r.you.choice]) {
+      buttons[r.you.choice].classList.add('wrong');
+    }
+    if (r.opponent.choice !== null && buttons[r.opponent.choice]) {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = opponentName;
+      buttons[r.opponent.choice].appendChild(tag);
+    }
+
+    $('me-score').textContent = r.you.score;
+    $('opp-score').textContent = r.opponent.score;
+    const fb = $('q-feedback');
+    if (r.you.points > 0) { fb.textContent = 'Correct! +' + r.you.points; fb.style.color = 'var(--good)'; }
+    else if (r.you.choice === null) { fb.textContent = "Time's up!"; fb.style.color = 'var(--muted)'; }
+    else { fb.textContent = 'Wrong answer'; fb.style.color = 'var(--bad)'; }
+  }
+
+  // ---------- result ----------
+  function onMatchEnd(d) {
+    const title = $('res-title');
+    title.className = 'result-title ' + d.result;
+    title.textContent = d.result === 'win' ? 'You win! 🎉' : d.result === 'lose' ? 'You lose' : "It's a draw";
+    $('res-score').textContent = d.you.score + '  –  ' + d.opponent.score + '   vs ' + d.opponent.username;
+    $('res-points').textContent = '+' + d.pointsGained + ' points' +
+      (d.totalPoints != null ? ' · total ' + d.totalPoints : '');
+    if (d.totalPoints != null) me.totalPoints = d.totalPoints;
+    $('rematch-btn').disabled = false;
+    $('res-notice').classList.add('hidden');
+    show('result');
+  }
+
+  $('rematch-btn').onclick = () => {
+    socket.emit('rematch', {}, (res) => {
+      const n = $('res-notice');
+      if (!res.ok) { n.textContent = errText(res.error); n.classList.remove('hidden'); return; }
+      if (res.waiting) {
+        $('rematch-btn').disabled = true;
+        n.textContent = 'Waiting for ' + opponentName + ' to accept…';
+        n.classList.remove('hidden');
+      }
+    });
+  };
+  $('another-btn').onclick = () => lastQuizType ? findMatch(lastQuizType) : goHome();
+  $('home-btn').onclick = () => goHome();
+
+  // ---------- start ----------
+  const saved = load('token');
+  if (saved) connect(saved); else show('login');
+</script>
+</body>
+</html>
